@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  A template for an HTTP API that creates, updates, and deletes software engineer candidates details in DynamoDB
+
+Globals:
+  Function:
+    Timeout: 10
+
+Resources:
+  DDBHandlerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/manage-candidates-handler/
+      Handler: app.handler
+      Runtime: nodejs12.x
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CandidatesTable
+      Events:
+        GetAllCandidates:
+          Type: HttpApi
+          Properties:
+            Path: /candidates
+            Method: GET
+        GetAnCandidates:
+          Type: HttpApi
+          Properties:
+            Path: /candidates/{id}
+            Method: GET
+        DeleteAnCandidates:
+          Type: HttpApi
+          Properties:
+            Path: /candidates/{id}
+            Method: DELETE
+        CreateOrUpdateCandidates:
+          Type: HttpApi
+          Properties:
+            Path: /candidates
+            Method: PUT
+
+  CandidatesTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: id
+        Type: String
+      TableName: http-crud-candidates
+
+Outputs:
+  ApiEndpoint:
+    Description: "The invoke URL for our HTTP API"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/candidates"
+  Function:
+    Description: "DynamoDB handler function ARN"
+    Value: !GetAtt DDBHandlerFunction.Arn
